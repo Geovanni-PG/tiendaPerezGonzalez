@@ -63,7 +63,7 @@ export default function CartDrawer() {
                     sx={{ ml: 1.5 }}
                     primary={producto.nombre}
                     secondary={
-                      <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 0.5 }}>
+                      <Stack direction="row" spacing={1} sx={{ mt: 0.5, alignItems: "center" }}>
                         <IconButton size="small" onClick={() => actualizarCantidad(producto.id, cantidad - 1)}>
                           <RemoveIcon fontSize="inherit" />
                         </IconButton>
