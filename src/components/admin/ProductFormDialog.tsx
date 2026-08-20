@@ -414,7 +414,7 @@ export default function ProductFormDialog({
             </Typography>
 
             {additionalImageUrls.length > 0 && (
-              <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mb: 1 }}>
+              <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", mb: 1 }}>
                 {additionalImageUrls.map((url) => (
                   <Box key={url} sx={{ position: "relative", width: 72, height: 72, borderRadius: 2, overflow: "hidden" }}>
                     <Image src={url} alt="Imagen adicional" fill style={{ objectFit: "cover" }} />
