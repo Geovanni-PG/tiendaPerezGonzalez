@@ -109,6 +109,11 @@ export default function GananciasAdmin() {
 
   pedidos.forEach((pedido) => {
     const fechaPedido = new Date(pedido.fecha);
+
+    // Si el pedido no tiene una fecha válida, lo ignoramos en este resumen
+    // en vez de dejar que rompa toda la página
+    if (Number.isNaN(fechaPedido.getTime())) return;
+
     const gananciaPedido = (pedido.items ?? []).reduce(
       (suma, item) => suma + (item.precio - (item.costPrice ?? 0)) * item.cantidad,
       0
