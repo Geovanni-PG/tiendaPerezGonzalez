@@ -1,7 +1,7 @@
 "use client";
 
-import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
-import { doc, onSnapshot, getDoc, updateDoc, deleteField } from "firebase/firestore";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { doc, onSnapshot, updateDoc, deleteField } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { useProducts } from "@/hooks/useProducts";
@@ -31,54 +31,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cantidadesInvitado, setCantidadesInvitado] = useState<Record<string, number>>({});
   const [cantidadesCuenta, setCantidadesCuenta] = useState<Record<string, number>>({});
 
-  // Referencia para leer el carrito de invitado más reciente dentro del efecto de abajo,
-  // sin tener que agregarlo como dependencia (evitaría que el efecto se reinicie en cada cambio)
-  const cantidadesInvitadoRef = useRef(cantidadesInvitado);
-  useEffect(() => {
-    cantidadesInvitadoRef.current = cantidadesInvitado;
-  }, [cantidadesInvitado]);
-
-  // Detecta si es un inicio de sesión "nuevo" en esta visita (para fusionar solo una vez)
-  const uidAnteriorRef = useRef<string | null>(null);
-
+  // Sincroniza en tiempo real el carrito guardado en la cuenta, mientras haya sesión
   useEffect(() => {
     if (!usuarioFirebase) {
       setCantidadesCuenta({});
-      uidAnteriorRef.current = null;
       return;
     }
 
-    const esInicioNuevo = uidAnteriorRef.current === null;
-    uidAnteriorRef.current = usuarioFirebase.uid;
-
     const refUsuario = doc(db, "usuarios", usuarioFirebase.uid);
-
-    async function fusionarCarritoInvitado() {
-      const carritoInvitado = cantidadesInvitadoRef.current;
-      if (Object.keys(carritoInvitado).length === 0) return;
-
-      const snapshot = await getDoc(refUsuario);
-      const carritoActual = snapshot.data()?.carrito ?? {};
-
-      const actualizaciones: Record<string, number> = {};
-      Object.entries(carritoInvitado).forEach(([idProducto, cantidad]) => {
-        actualizaciones[`carrito.${idProducto}`] = (carritoActual[idProducto] ?? 0) + cantidad;
-      });
-
-      await updateDoc(refUsuario, actualizaciones);
-      setCantidadesInvitado({});
-    }
-
-    if (esInicioNuevo) {
-      fusionarCarritoInvitado();
-    }
-
     const unsubscribe = onSnapshot(refUsuario, (snapshot) => {
       const datos = snapshot.data();
       setCantidadesCuenta(datos?.carrito ?? {});
     });
 
     return () => unsubscribe();
+  }, [usuarioFirebase]);
+
+  // Al cerrar sesión, se limpia cualquier carrito de invitado que hubiera quedado
+  useEffect(() => {
+    if (!usuarioFirebase) {
+      setCantidadesInvitado({});
+    }
   }, [usuarioFirebase]);
 
   const cantidades = usuarioFirebase ? cantidadesCuenta : cantidadesInvitado;
@@ -156,3 +129,4 @@ export function useCart() {
   }
   return contexto;
 }
+
